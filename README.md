@@ -8,7 +8,8 @@ _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields a
 Run `conda create --name <env> --file requirements.txt`.
 
 ## Models training
-Activate the conda environment and run `./kdd.sh`  and `./prsa.sh`.
+Activate the conda environment and run `./kdd.sh` and `./prsa.sh`. 
+Note that the pre-processed datasets are located at `./data/kdd/*.pkl` and `./data/prsa/*.pkl`. If you have trouble reading them, you can process data manually with `./dataset/kdd.ipynb`.
 
 ## Results
 Use `./plots/results2latex.ipynb`.
