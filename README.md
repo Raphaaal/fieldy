@@ -1,4 +1,4 @@
-This repository hosts the code for the paper [Fine-grained Attention in Hierarchical Transformers for Tabular Time-series](arxiv) by R. Azorin, Z. Ben Houidi, M. Gallo, A. Finamore, and P. Michiardi.
+This repository hosts the code for the paper [Fine-grained Attention in Hierarchical Transformers for Tabular Time-series](https://arxiv.org/abs/2406.15327) by R. Azorin, Z. Ben Houidi, M. Gallo, A. Finamore, and P. Michiardi.
 
 _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields at both the row and column levels. We compare our proposal against state of the art models on regression and classification tasks using public tabular time-series datasets. Our results show that combining row-wise and column-wise attention improves performance without increasing model size.
 
@@ -20,8 +20,12 @@ Use `./plots/field_wise_attention.ipynb`.
 ## Citation
 If you use this paper or code as a reference, please cite it with:
 ```
-{
-
+@misc{azorin2024finegrained,
+      title={Fine-grained Attention in Hierarchical Transformers for Tabular Time-series}, 
+      author={Raphael Azorin and Zied Ben Houidi and Massimo Gallo and Alessandro Finamore and Pietro Michiardi},
+      year={2024},
+      eprint={2406.15327},
+      archivePrefix={arXiv},
 }
 ```
 
