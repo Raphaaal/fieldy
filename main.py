@@ -37,6 +37,7 @@ from transformers import TrainerState
 from transformers import TrainerControl
 
 from dataset.prsa import PRSADataset
+from dataset.card import TransactionDataset
 
 from models.models import Model
 from models.models import FTTransformerFlatten
@@ -81,6 +82,10 @@ import pandas as pd
 
 
 class InspectCallback(TrainerCallback):
+    """
+    Inspect the same sample throughout training 
+    i.e., displays preds and labels for comparison
+    """
 
     def __init__(self, *args, **kwargs):
         self.dataset = kwargs.pop('dataset')
@@ -111,6 +116,7 @@ class InspectCallback(TrainerCallback):
         # Run predictions on examples
         labels = examples_device["labels"]
         with torch.no_grad():
+            # preds = model(**examples_device)
             preds, full_outputs = model(**examples_device)
             if self.args.data_type == "prsa":
                 if self.scaler:
@@ -143,6 +149,10 @@ class InspectCallback(TrainerCallback):
 
  
 class MultiRegressionTrainerMSE(Trainer):
+    """
+    Trainer class for multi-output regression tasks
+    where the labels are in the range [0, 1].
+    """
 
     def __init__(self, *args,  **kwargs):
         self.family =  kwargs.pop("family")
@@ -152,7 +162,27 @@ class MultiRegressionTrainerMSE(Trainer):
         super().__init__(*args, **kwargs)
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.get("labels")  
+        """
+        Combined RMSE
+        This function is also used by trainer.predict()
+        """
+
+        labels = inputs.get("labels")
+
+        # For debugging
+        if self.dump_input:
+            np.savetxt(
+                self.args.output_dir + '/input.txt', 
+                inputs["input_ids"][0].cpu().numpy(),
+                 fmt='%.0f',
+            )
+            np.savetxt(
+                self.args.output_dir + '/labels.txt', 
+                inputs["labels"][0].cpu().numpy(),
+                 fmt='%.5f',
+            )
+            self.dump_input = False        
+
         preds, full_outputs = model(**inputs)
         loss_fct = torch.nn.functional.mse_loss
         loss = loss_fct(labels.flatten(), preds.flatten())
@@ -169,10 +199,31 @@ class BinaryClassificationTrainerBCE(Trainer):
             super().__init__(*args, **kwargs)
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.get("labels")      
+        """
+        Binary Cross Entropy with Logits
+        This function is also used by trainer.predict()
+        """
+
+        labels = inputs.get("labels") 
+
+        # For debugging
+        if self.dump_input:
+            np.savetxt(
+                self.args.output_dir + '/input.txt', 
+                inputs["input_ids"][0].cpu().numpy(),
+                fmt='%.0f',
+            )
+            np.savetxt(
+                self.args.output_dir + '/labels.txt', 
+                np.array([inputs["labels"][0].cpu().numpy()]),
+                fmt='%.5f',
+            )
+            self.dump_input = False        
+
         preds, full_outputs = model(**inputs)
         loss_fct = torch.nn.functional.binary_cross_entropy_with_logits
-        imbalance = 0.1
+        imbalance = 0.1 # hard-coded
+        # Class 1: 10, Class 0: 1
         weight = (imbalance * 100.) * labels.flatten()
         weight = weight + (1. * (1 - labels.flatten()))
         loss = loss_fct(preds.flatten(), labels.flatten(), weight=weight)
@@ -188,6 +239,8 @@ class TrainerWithInputDump(Trainer):
         super().__init__(*args, **kwargs)
 
     def compute_loss(self, model, inputs, return_outputs=False):
+        """Dump the inputs to a txt file once, then compute the loss as usual"""
+
         if self.dump_input:
             np.savetxt(
                 self.args.output_dir + '/input.txt', 
@@ -233,7 +286,6 @@ def compute_metrics_kdd(model_output):
         return score
 
 def compute_metrics_prsa_with_scaler(scaler):
-
     def compute_metrics_prsa(model_output):
         preds = model_output.predictions
         labels = model_output.label_ids
@@ -354,7 +406,6 @@ def fine_tune(args, model, dataset, train_dataset, eval_dataset, test_dataset, v
         for _, labels_seq in test_dataset:
             original_test_labels.append(labels_seq) 
         original_test_labels = np.stack(original_test_labels)
-
         # Initialize the final layer biais to the mean value of targets (class imbalance)
         train_labels = []
         for _, labels_seq in train_dataset:
@@ -456,6 +507,7 @@ def format_output_dir(args, create=True):
 
     if args.trash:
         output_dir += "/_trash/"
+    
     if args.family == "fttransf_flatten":
         output_dir += "FTTransformer"
     elif args.family == "tabbie":
@@ -513,7 +565,7 @@ def format_output_dir(args, create=True):
 
 def load_kdd(args, pre_training=True):
     """
-    Load the KDD dataset that has already been pre-processed.
+    Load the KDD dataset that has already been pre-processed with ./dataset/kdd.ipynb
     """
     preserved_cols = None
     name_suffix = ""
@@ -534,7 +586,7 @@ def load_kdd(args, pre_training=True):
 def load_prsa(args):
     """
     Load the PRSA dataset if it has already been pre-processed.
-    Otherwise, pre-processes it, saves it and loads it.
+    Otherwise, pre-process, save and load it.
     """
     
     preserved_cols = None
@@ -562,129 +614,133 @@ def load_prsa(args):
     return dataset, preserved_cols
 
 def prepare_labels(train_dataset, test_dataset, log):
-    test_labels = []
-    for _, labels_seq in test_dataset:
-        if 1 in labels_seq:
-            label = 1
-        else:
-            label = 0
-        test_labels.append(label)
-    test_labels = np.stack(test_labels)
+            """
+            Taking the last label in each sequence
+            """
+            # Save the raw test labels for final evaluation later on
+            test_labels = []
+            for _, labels_seq in test_dataset:
+                if 1 in labels_seq:
+                    label = 1
+                else:
+                    label = 0
+                test_labels.append(label)
+            test_labels = np.stack(test_labels)
 
-    log.info(f"Label shape for one sample: {test_labels[0].shape}")
+            log.info(f"Label shape for one sample: {test_labels[0].shape}")
 
-    return train_dataset, test_labels
+            return train_dataset, test_labels
 
 def pre_train(args, model, dataset, train_dataset, eval_dataset, test_dataset, vocab):
     # Setup Masked Language Modeling for pre-training
-    if args.family == "fttransf_flatten":
-        collator_cls = "FTTransformerFlattenDataCollatorForLanguageModeling"
-    elif args.family == "tabbie":
-        collator_cls = "TabbieDataCollatorForLanguageModeling"
-    elif args.family == "column_tabbert":
-        collator_cls = "ColumnTabBERTDataCollatorForLanguageModeling"
-    elif args.family == "row_tabbert":
-        collator_cls = "RowTabBERTDataCollatorForLanguageModeling"
-    elif args.family == "fieldy":
-        collator_cls = "FieldyDataCollatorForLanguageModeling"
-    log.info(f"collator class: {collator_cls}")
-    
-    data_collator_pt = eval(collator_cls)(
-        tokenizer=model.tokenizer, 
-        mlm=args.mlm, 
-        mlm_probability=args.mlm_prob,
-        ncols=dataset.ncols,
-        seq_len=dataset.seq_len,
-        data_type=args.data_type,
-        randomize_seq=True,
-    )
+        if args.family == "fttransf_flatten":
+            collator_cls = "FTTransformerFlattenDataCollatorForLanguageModeling"
+        elif args.family == "tabbie":
+            collator_cls = "TabbieDataCollatorForLanguageModeling"
+        elif args.family == "column_tabbert":
+            collator_cls = "ColumnTabBERTDataCollatorForLanguageModeling"
+        elif args.family == "row_tabbert":
+            collator_cls = "RowTabBERTDataCollatorForLanguageModeling"
+        elif args.family == "fieldy":
+            collator_cls = "FieldyDataCollatorForLanguageModeling"
+        log.info(f"collator class: {collator_cls}")
+        
+        data_collator_pt = eval(collator_cls)(
+            tokenizer=model.tokenizer, 
+            mlm=args.mlm, 
+            mlm_probability=args.mlm_prob,
+            ncols=dataset.ncols,
+            seq_len=dataset.seq_len,
+            data_type=args.data_type,
+            randomize_seq=True,
+        )
 
-    pt_training_args = TrainingArguments(
-        output_dir=args.output_dir + "/pt/",
-        overwrite_output_dir=True,
-        do_train=args.do_train,
-        do_eval=args.do_eval,
-        evaluation_strategy="epoch",
-        prediction_loss_only=True,
-        per_device_train_batch_size=args.bs,
-        per_device_eval_batch_size=args.bs,
-        num_train_epochs=args.pt_epochs,
-        logging_strategy="epoch",
-        save_strategy="epoch",
-        fp16=True,
-        logging_dir=args.log_dir + "/pt/", 
-        label_names=["masked_lm_labels"],
-        metric_for_best_model="eval_loss",
-        load_best_model_at_end=True,
-        save_total_limit=1,
-        label_smoothing_factor=0.0,
-        gradient_accumulation_steps=1,
-        optim="adamw_torch",
-        learning_rate=0.00005,
-        warmup_steps=0,
-    )
+        pt_training_args = TrainingArguments(
+            output_dir=args.output_dir + "/pt/",
+            overwrite_output_dir=True,
+            do_train=args.do_train,
+            do_eval=args.do_eval,
+            evaluation_strategy="epoch",
+            prediction_loss_only=True,
+            per_device_train_batch_size=args.bs,
+            per_device_eval_batch_size=args.bs,
+            num_train_epochs=args.pt_epochs,
+            logging_strategy="epoch",
+            save_strategy="epoch",
+            fp16=True,
+            logging_dir=args.log_dir + "/pt/", 
+            label_names=["masked_lm_labels"],
+            metric_for_best_model="eval_loss",
+            load_best_model_at_end=True,
+            save_total_limit=1,
+            label_smoothing_factor=0.0,
+            gradient_accumulation_steps=1,
+            optim="adamw_torch",
+            learning_rate=0.00005,
+            warmup_steps=0,
+        )
 
-    trainer_pt = TrainerWithInputDump(
-        script_logger=log,
-        model=model.model,
-        args=pt_training_args,
-        data_collator=data_collator_pt,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-    )
+        trainer_pt = TrainerWithInputDump(
+            script_logger=log,
+            model=model.model,
+            args=pt_training_args,
+            data_collator=data_collator_pt,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+        )
 
-    # Train
-    trainer_pt.train()
-    trainer_pt.save_model()
+        # Train
+        trainer_pt.train()
+        trainer_pt.save_model()
 
 def scale_targets(args, train_dataset, test_dataset, log):
-        """
-        Min-max scaling of the labels in the range [0,1] + 
-        Taking the last label in each sequence
-        """
-        if args.scaling == "std":
-            scaler = StandardScaler()
-        elif args.scaling == "minmax":
-            scaler = MinMaxScaler()
-        elif args.scaling == "quantnorm":
-            scaler = QuantileTransformer(output_distribution="normal")
-        else:
-            log.info(f"Missing targets scaling argument")
-            sys.exit()
+            """
+            Min-max scaling of the labels in the range [0,1] + 
+            Taking the last label in each sequence
+            """
+            if args.scaling == "std":
+                scaler = StandardScaler()
+            elif args.scaling == "minmax":
+                scaler = MinMaxScaler()
+            elif args.scaling == "quantnorm":
+                scaler = QuantileTransformer(output_distribution="normal")
+            else:
+                log.info(f"Missing targets scaling argument")
+                sys.exit()
 
-        # Fit the scaler on the training set
-        train_labels = []
-        for _, labels_seq in train_dataset:
-            train_labels.append(labels_seq)
-        original_train_labels = np.stack(train_labels)
-        train_labels = np.concatenate(train_labels)
-        scaler.fit(train_labels)
+            # Fit the scaler on the training set
+            train_labels = []
+            for _, labels_seq in train_dataset:
+                train_labels.append(labels_seq)
+            original_train_labels = np.stack(train_labels)
+            train_labels = np.concatenate(train_labels)
+            scaler.fit(train_labels)
 
-        # Save the raw test labels for final evaluation later on
-        test_labels = []
-        for _, labels_seq in test_dataset:
-            test_labels.append(labels_seq) 
-        original_test_labels = np.stack(test_labels)
+            # Save the raw test labels for final evaluation later on
+            test_labels = []
+            for _, labels_seq in test_dataset:
+                test_labels.append(labels_seq) 
+            original_test_labels = np.stack(test_labels)
 
-        # Transform the labels using the fitted scaler
-        final_targets = []
-        # Targets are shared across dataset because they are subsets 
-        # (i.e., views on the same shared dataset)
-        all_targets = train_dataset.dataset.targets 
-        for target_list in all_targets:
-            transf_target_list = scaler.transform(target_list)
-            final_targets.append(transf_target_list)
+            # Transform the labels using the fitted scaler
+            final_targets = []
+            # Targets are shared across dataset because they are subsets 
+            # (i.e., views on the same shared dataset)
+            all_targets = train_dataset.dataset.targets 
+            for target_list in all_targets:
+                transf_target_list = scaler.transform(target_list)
+                final_targets.append(transf_target_list)
 
-        # Targets are shared across dataset because they are subsets 
-        # (i.e., views on the same shared dataset)
-        train_dataset.dataset.targets = final_targets 
+            # Targets are shared across dataset because they are subsets 
+            # (i.e., views on the same shared dataset)
+            train_dataset.dataset.targets = final_targets 
 
-        log.info(f"Label shape for one sample: {test_labels[0].shape}")
+            log.info(f"Label shape for one sample: {test_labels[0].shape}")
 
-        return scaler, train_dataset, original_test_labels, original_train_labels
+            return scaler, train_dataset, original_test_labels, original_train_labels
 
 def score_ft_model(args, trainer, dataset, scaler, test_labels):
-    output = trainer.predict(dataset)
+    output = trainer.predict(dataset) # This outputs a numpy array
 
     if args.data_type == "prsa":
         preds = torch.tensor(output.predictions)
@@ -726,7 +782,7 @@ def main(args):
         num_ft_labels = 1 # Binary loan default pred for each sample
         dataset.seq_len = 10
     else:
-        raise Exception(f"Data type '{args.data_type}' not defined")
+        raise Exception(f"data type '{args.data_type}' not defined")
     vocab = dataset.vocab
     timedelta_colid = None
     custom_special_tokens = vocab.get_special_tokens()
