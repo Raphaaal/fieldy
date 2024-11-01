@@ -68,6 +68,3 @@ If you use this paper or code as a reference, please cite it with:
 ## Acknowledgements
 This repository is built on top of [TabBERT](https://github.com/IBM/TabFormer).
 We would also like to thanks the authors of [UniTTab](https://arxiv.org/abs/2302.06375), for discussions on metrics and pre-processing. 
-
-This repository is built on top of [TabBERT](https://github.com/IBM/TabFormer).
-We would also like to thanks the authors of [UniTTab](https://arxiv.org/abs/2302.06375), for discussions on metrics and pre-processing. 
