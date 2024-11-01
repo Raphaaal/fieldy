@@ -5,3 +5,4 @@ torch==2.0.1
 transformers==4.31.0
 pandas==2.0.2
 accelerate==0.21.0
+ipykernel==6.25.1
