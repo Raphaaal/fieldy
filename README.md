@@ -21,12 +21,8 @@ Choose an option below to load the preprocessed datasets:
       - `./data/prsa/PRSADataset_labeled.pkl`
 
 - With the **raw CSVs**:
-1. Delete the Git Large File Storage pointers:
-      - `rm ./data/kdd/KDDDataset_ft.pkl`
-      - `rm ./data/kdd/KDDDataset_ft.pkl`
-      - `rm ./data/prsa/PRSADataset_labeled.pkl`
-2. To preprocess the KDD dataset, use `./dataset/kdd.ipynb`.
-3. To preprocess the PRSA dataset, you have nothing else to do, it will be automatically triggered.
+1. To preprocess the KDD dataset, use `./dataset/kdd.ipynb`.
+2. To preprocess the PRSA dataset, you have nothing else to do, it will be automatically triggered.
 
 ## Models training
 
