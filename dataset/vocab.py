@@ -120,9 +120,9 @@ class Vocabulary:
         else:
             raise ValueError("Only 'local_ids' or 'tokens' can be passed as value of the 'what_to_get' parameter.")
 
-    def save_vocab(self, fname):
+    def save_vocab(self, fname, save_location):
         self.filename = fname
-        with open(fname, "w") as fout:
+        with open(save_location, "w") as fout:
             for idx in self.id2token:
                 token, field, _ = self.id2token[idx]
                 token = "%s_%s" % (field, token)
