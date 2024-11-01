@@ -37,7 +37,6 @@ from transformers import TrainerState
 from transformers import TrainerControl
 
 from dataset.prsa import PRSADataset
-from dataset.card import TransactionDataset
 
 from models.models import Model
 from models.models import FTTransformerFlatten
@@ -596,7 +595,7 @@ def load_prsa(args):
             dataset = pickle.load(f)
     except FileNotFoundError:
         dataset = PRSADataset(
-            stride=args.stride,
+            stride=5,
             mlm=args.mlm,
             return_labels=True,
             use_station=True,
