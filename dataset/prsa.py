@@ -252,4 +252,4 @@ class PRSADataset(Dataset):
     def save_vocab(self, vocab_dir):
         file_name = path.join(vocab_dir, f'vocab.nb')
         log.info(f"saving vocab at {file_name}")
-        self.vocab.save_vocab(file_name)
+        self.vocab.save_vocab(file_name, file_name)
