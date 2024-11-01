@@ -5,13 +5,49 @@ _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields a
 <img src="https://github.com/raphaaal/fieldy/blob/main/intro_fig.png" alt="intro_fig" width="500"/>
 
 ## Requirements
-Run `conda create --name <env> --file requirements.txt`.
+1. Create an environment with `conda create --name fieldy python==3.8.16` 
+2. Activate it with `conda activate fieldy`
+3. Install the requirements with `pip install -r requirements.txt`
+
+## Datasets loading
+
+Choose an option below to load the preprocessed datasets:
+
+- With **Git Large File Storage**
+1. Install [Git Large File Storage](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
+2. Run `git lfs pull`. This will download:
+      - `./data/kdd/KDDDataset_ft.pkl` (184 MB)
+      - `./data/kdd/KDDDataset_ft.pkl` (10 MB)
+      - `./data/prsa/PRSADataset_labeled.pkl` (122 MB)
+
+- With **DropBox**:
+1. Use this [download link](https://www.dropbox.com/scl/fo/8wy5ng9t8nl60fwxkjpn5/ACK6X8d_O1XHGQwoPS4_OzA?rlkey=dym6nzfgzb1h7rqmdphogp4q5&st=0q7og92n&dl=0)
+2. Move the downloaded files to:
+      - `./data/kdd/KDDDataset_ft.pkl`
+      - `./data/kdd/KDDDataset_ft.pkl`
+      - `./data/prsa/PRSADataset_labeled.pkl`
+
+- With the **raw CSVs**:
+1. Delete the Git Large File Storage pointers:
+      - `rm ./data/kdd/KDDDataset_ft.pkl`
+      - `rm ./data/kdd/KDDDataset_ft.pkl`
+      - `rm ./data/prsa/PRSADataset_labeled.pkl`
+2. To preprocess the KDD dataset, use `./dataset/kdd.ipynb`.
+3. To preprocess the PRSA dataset, you have nothing else to do, it will be automatically triggered.
 
 ## Models training
-Activate the conda environment and run `./kdd.sh` and `./prsa.sh`. 
-Note that the pre-processed datasets are located at `./data/kdd/*.pkl` and `./data/prsa/*.pkl`. If you have trouble reading them, you can process data manually with `./dataset/kdd.ipynb`.
 
-## Results
+- To train and evaluate models on the **KDD Loan default prediction** dataset:
+1. Run `chmod +x kdd.sh`
+2. Run `./kdd.sh`
+
+- To train and evaluate models on the **PRSA Beijing pollution** dataset:
+1. Run `chmod +x prsa.sh`
+2. Run `./prsa.sh`
+
+Results will be saved under `./results`.
+
+## Plot results
 Use `./plots/results2latex.ipynb`.
 
 ## Toy task for field-wise attention
@@ -30,5 +66,8 @@ If you use this paper or code as a reference, please cite it with:
 ```
 
 ## Acknowledgements
+This repository is built on top of [TabBERT](https://github.com/IBM/TabFormer).
+We would also like to thanks the authors of [UniTTab](https://arxiv.org/abs/2302.06375), for discussions on metrics and pre-processing. 
+
 This repository is built on top of [TabBERT](https://github.com/IBM/TabFormer).
 We would also like to thanks the authors of [UniTTab](https://arxiv.org/abs/2302.06375), for discussions on metrics and pre-processing. 
