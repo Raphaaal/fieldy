@@ -13,13 +13,6 @@ _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields a
 
 Choose an option below to load the preprocessed datasets:
 
-- With **Git Large File Storage**
-1. Install [Git Large File Storage](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
-2. Run `git lfs pull`. This will download:
-      - `./data/kdd/KDDDataset_ft.pkl` (184 MB)
-      - `./data/kdd/KDDDataset_ft.pkl` (10 MB)
-      - `./data/prsa/PRSADataset_labeled.pkl` (122 MB)
-
 - With **DropBox**:
 1. Use this [download link](https://www.dropbox.com/scl/fo/8wy5ng9t8nl60fwxkjpn5/ACK6X8d_O1XHGQwoPS4_OzA?rlkey=dym6nzfgzb1h7rqmdphogp4q5&st=0q7og92n&dl=0)
 2. Move the downloaded files to:
