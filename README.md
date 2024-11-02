@@ -8,7 +8,8 @@ _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields a
 1. Create an environment with `conda create --name fieldy python==3.8.16` 
 2. Activate it with `conda activate fieldy`
 3. Install the requirements with `pip install -r requirements.txt`
-4. Note: you need a CUDA device with at least 16 GB of VRAM to train the models. 
+
+Note: you need a CUDA device with at least 16 GB of VRAM to train all the models. If you want to use CPU or multi-GPU training, you may consider integrating [HuggingFace Accelerate](https://huggingface.co/docs/accelerate/index) into the existing code. 
 
 ## Datasets loading
 
