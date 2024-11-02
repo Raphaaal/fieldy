@@ -8,3 +8,4 @@ ipykernel==6.25.1
 seaborn==0.13.2
 matplotlib==3.7.5
 bertviz==1.4.0
+accelerate==0.21.0
