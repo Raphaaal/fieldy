@@ -17,7 +17,7 @@ Choose an option below to load the preprocessed datasets:
 - With **DropBox**:
 1. Use this [download link](https://www.dropbox.com/scl/fo/8wy5ng9t8nl60fwxkjpn5/ACK6X8d_O1XHGQwoPS4_OzA?rlkey=dym6nzfgzb1h7rqmdphogp4q5&st=0q7og92n&dl=0)
 2. Move the downloaded files to:
-      - `./data/kdd/KDDDataset_ft.pkl`
+      - `./data/kdd/KDDDataset_pt.pkl`
       - `./data/kdd/KDDDataset_ft.pkl`
       - `./data/prsa/PRSADataset_labeled.pkl`
 
