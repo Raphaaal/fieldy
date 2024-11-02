@@ -8,6 +8,7 @@ _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields a
 1. Create an environment with `conda create --name fieldy python==3.8.16` 
 2. Activate it with `conda activate fieldy`
 3. Install the requirements with `pip install -r requirements.txt`
+4. Setup `accelerate` with `accelerate config` and follow the instructions.
 
 ## Datasets loading
 
