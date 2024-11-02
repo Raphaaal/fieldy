@@ -8,7 +8,7 @@ _Fieldy_ is a fine-grained hierarchical Transformer that contextualizes fields a
 1. Create an environment with `conda create --name fieldy python==3.8.16` 
 2. Activate it with `conda activate fieldy`
 3. Install the requirements with `pip install -r requirements.txt`
-4. Setup HF Accelerate with `accelerate config` and follow the instructions. Select `fp16` in the last step for mixed precision.
+4. Note: you need a CUDA device with at least 16 GB of VRAM to train the models. 
 
 ## Datasets loading
 
